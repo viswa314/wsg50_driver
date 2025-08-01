@@ -1,4 +1,6 @@
-venv/
+venv_gripper/
 __pycache__/
 *.pyc
+*.pyo
 *.log
+*.egg-info/

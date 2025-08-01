@@ -9,19 +9,22 @@ class WSG50110Driver:
         self.sock = None
         self.connected = False
 
-        # Simulated internal state
-        self.current_width = 50.0  # mm (default starting point)
-        self.min_width = 0.0
-        self.max_width = 110.0
+        # Internal simulated state
+        self.current_width = None  # unknown until homed
+        self.min_width = None
+        self.max_width = None
         self.speed = 30.0  # mm/s
-        self.force = 40.0  # N (simulated)
+        self.force = 40.0  # N
+
+        self.homed = False
+        self.calibrated = False
 
     def connect(self):
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((self.ip, self.port))
             self.connected = True
-            print(f"[INFO] Connected to gripper at {self.ip}:{self.port}")
+            print(f"[INFO] Connected to WSG 50-110 at {self.ip}:{self.port}")
         except socket.error as e:
             print(f"[ERROR] Connection failed: {e}")
             self.connected = False
@@ -44,7 +47,41 @@ class WSG50110Driver:
             self.connected = False
             return None
 
+    def home(self):
+        print("[ACTION] Performing homing sequence...")
+        time.sleep(1)  # simulate delay
+        self.min_width = 0.0
+        self.max_width = 110.0
+        self.current_width = self.max_width
+        self.homed = True
+        print(f"[INFO] Homing complete. Current width set to {self.current_width} mm")
+
+    def calibrate(self):
+        print("[ACTION] Calibrating limits...")
+        if not self.homed:
+            print("[ERROR] Cannot calibrate before homing.")
+            return
+        # Simulate moving full close and full open
+        self.min_width = 0.0
+        self.max_width = 110.0
+        time.sleep(1.5)
+        self.calibrated = True
+        print(f"[INFO] Calibration complete: min = {self.min_width}, max = {self.max_width}")
+
     def move_to_width(self, target_width, speed=None):
+        if not self.homed:
+            print("[ERROR] Cannot move: gripper not homed.")
+            return
+        if not self.calibrated:
+            print("[WARN] Moving without calibration.")
+
+        if self.min_width is not None and target_width < self.min_width:
+            print(f"[ERROR] Target width {target_width} mm is below min limit.")
+            return
+        if self.max_width is not None and target_width > self.max_width:
+            print(f"[ERROR] Target width {target_width} mm exceeds max limit.")
+            return
+
         if speed is None:
             speed = self.speed
 
@@ -56,6 +93,8 @@ class WSG50110Driver:
     def get_status(self):
         return {
             "connected": self.connected,
+            "homed": self.homed,
+            "calibrated": self.calibrated,
             "current_width": self.current_width,
             "min_width": self.min_width,
             "max_width": self.max_width,
