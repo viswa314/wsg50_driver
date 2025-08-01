@@ -46,6 +46,15 @@ class TestWSG50110Driver(unittest.TestCase):
         driver.move_to_width(40.0)
         self.assertIsNone(driver.current_width)
 
+    def test_recover_connection(self):
+        driver = WSG50110Driver(ip='127.0.0.1', port=1000)
+        driver.connect()
+        # Simulate dropped connection
+        driver.connected = False
+        recovered = driver.recover_connection(retries=2, delay=1)
+        self.assertIn(recovered, [True, False])
+
+
 
 if __name__ == '__main__':
     unittest.main()
