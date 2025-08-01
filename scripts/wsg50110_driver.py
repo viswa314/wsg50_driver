@@ -10,7 +10,7 @@ class WSG50110Driver:
         self.connected = False
 
         # Internal simulated state
-        self.current_width = None  # unknown until homed
+        self.current_width = None
         self.min_width = None
         self.max_width = None
         self.speed = 30.0  # mm/s
@@ -29,6 +29,18 @@ class WSG50110Driver:
             print(f"[ERROR] Connection failed: {e}")
             self.connected = False
 
+    def recover_connection(self, retries=3, delay=2):
+        print("[ACTION] Attempting to recover connection...")
+        for i in range(retries):
+            print(f"[RETRY] Attempt {i+1}/{retries}...")
+            self.connect()
+            if self.connected:
+                print("[INFO] Reconnected successfully.")
+                return True
+            time.sleep(delay)
+        print("[ERROR] Failed to recover connection.")
+        return False
+
     def disconnect(self):
         if self.sock:
             self.sock.close()
@@ -37,8 +49,10 @@ class WSG50110Driver:
 
     def send_command(self, data: bytes):
         if not self.connected:
-            print("[WARN] Not connected.")
-            return None
+            print("[WARN] Not connected. Trying to recover...")
+            if not self.recover_connection():
+                return None
+
         try:
             self.sock.sendall(data)
             return self.sock.recv(1024)
@@ -61,7 +75,6 @@ class WSG50110Driver:
         if not self.homed:
             print("[ERROR] Cannot calibrate before homing.")
             return
-        # Simulate moving full close and full open
         self.min_width = 0.0
         self.max_width = 110.0
         time.sleep(1.5)
