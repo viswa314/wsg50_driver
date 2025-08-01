@@ -20,6 +20,9 @@ class WSG50110Driver:
         self.calibrated = False
 
     def connect(self):
+        if self.sock:
+            self.sock.close()
+
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((self.ip, self.port))
@@ -28,6 +31,9 @@ class WSG50110Driver:
         except socket.error as e:
             print(f"[ERROR] Connection failed: {e}")
             self.connected = False
+            if self.sock:
+                self.sock.close()
+
 
     def recover_connection(self, retries=3, delay=2):
         print("[ACTION] Attempting to recover connection...")
