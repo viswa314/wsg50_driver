@@ -114,3 +114,34 @@ class WSG50110Driver:
             "speed": self.speed,
             "force": self.force
         }
+
+    def simulate_gcl_command(self, command: str):
+        tokens = command.strip().split()
+        if not tokens:
+            return "[ERROR] Empty command"
+
+        cmd = tokens[0].upper()
+
+        try:
+            if cmd == "GET" and tokens[1].upper() == "POS":
+                return f"{self.current_width:.2f}" if self.current_width is not None else "NaN"
+
+            elif cmd == "MOVE" and len(tokens) >= 3:
+                target = float(tokens[1])
+                speed = float(tokens[2])
+                self.move_to_width(target, speed)
+                return f"OK Moved to {target:.2f} mm"
+
+            elif cmd == "HOME":
+                self.home()
+                return "OK Homed"
+
+            elif cmd == "CALIBRATE":
+                self.calibrate()
+                return "OK Calibrated"
+
+            else:
+                return "[ERROR] Unknown command"
+
+        except Exception as e:
+            return f"[ERROR] {str(e)}"

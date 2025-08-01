@@ -54,6 +54,21 @@ class TestWSG50110Driver(unittest.TestCase):
         recovered = driver.recover_connection(retries=2, delay=1)
         self.assertIn(recovered, [True, False])
 
+    def test_gcl_commands(self):
+        driver = WSG50110Driver()
+        result1 = driver.simulate_gcl_command("HOME")
+        self.assertIn("OK", result1)
+
+        result2 = driver.simulate_gcl_command("CALIBRATE")
+        self.assertIn("OK", result2)
+
+        result3 = driver.simulate_gcl_command("MOVE 60 25")
+        self.assertIn("OK", result3)
+        self.assertEqual(driver.current_width, 60.0)
+
+        result4 = driver.simulate_gcl_command("GET POS")
+        self.assertEqual(result4, "60.00")
+
 
 
 if __name__ == '__main__':
